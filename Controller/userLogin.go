@@ -22,10 +22,14 @@ type Login struct {
 
 func UserLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Allow-Control-Allow-Methods", "POST")
 	var paylod Login
+	sendError := func(status int, message string) {
+		w.WriteHeader(status)
+		json.NewEncoder(w).Encode(map[string]string{"message": message})
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&paylod); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		sendError(http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -35,7 +39,7 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := UserCollection.FindOne(ctx, filter).Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			http.Error(w, "Invalid Email", http.StatusBadRequest)
+			sendError(http.StatusBadRequest, "Invalid Email")
 			return
 		}
 		log.Println("Error finding user:", err)
@@ -45,18 +49,28 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(paylod.PassWord))
 	if err != nil {
-		http.Error(w, "Invalid Password", http.StatusBadRequest)
+		sendError(http.StatusBadRequest, "Invalid Password")
 		return
 	}
 
 	tokenString, err := auth.JwtGenerate(user.Id, user.Role)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		sendError(http.StatusInternalServerError, "Failed to generate token")
 		return
 	}
-
-	json.NewEncoder(w).Encode(map[string]string{
+	// Build response containing token and selected user fields (don't return password hash)
+	response := map[string]interface{}{
 		"message": "Login successful!",
 		"token":   tokenString,
-	})
+		"user": map[string]interface{}{
+			"firstName":   user.FirstName,
+			"lastName":    user.LastName,
+			"email":       user.Email,
+			"phoneNumber": user.PhoneNumber,
+			"role":        user.Role,
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }

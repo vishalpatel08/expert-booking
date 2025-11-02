@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/handlers"
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron/v3"
 )
@@ -44,5 +45,13 @@ func main() {
 	log.Println("Cron job scheduler for reminders has been started.")
 
 	r := router.Router()
-	log.Fatal(http.ListenAndServe(":4000", r))
+	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:5173"})
+	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
+	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
+
+	corsHandler := handlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)(r)
+
+	log.Println("Starting server on :4000...")
+	log.Fatal(http.ListenAndServe(":4000", corsHandler))
+
 }
