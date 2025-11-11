@@ -6,6 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ServiceReg struct {
@@ -45,11 +48,18 @@ func ServiceRegistration(w http.ResponseWriter, r *http.Request) {
 		Price:      payload.Price,
 	}
 
-	_, err = ServiceCollection.InsertOne(context.Background(), newProfile)
+	res, err := ServiceCollection.InsertOne(context.Background(), newProfile)
 	if err != nil {
 		http.Error(w, "Failed to create service", http.StatusInternalServerError)
 		return
 	}
+	insertedID, _ := res.InsertedID.(primitive.ObjectID)
+	// push service id into provider profile
+	_, _ = ProviderCollection.UpdateOne(
+		context.Background(),
+		bson.M{"userId": claims.UserId},
+		bson.M{"$push": bson.M{"serviceIds": insertedID}},
+	)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Service registered successfully",
 	})

@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProviderReg struct {
@@ -36,7 +37,7 @@ func ProviderRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := bson.M{"providerId": claims.UserId}
+	filter := bson.M{"userId": claims.UserId}
 	count, err := ProviderCollection.CountDocuments(context.Background(), filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
@@ -71,6 +72,7 @@ func ProviderRegistration(w http.ResponseWriter, r *http.Request) {
 		Title:          payload.Title,
 		Domain:         payload.Domain,
 		Qualifications: payload.Qualifications,
+		ServiceIds:     []primitive.ObjectID{},
 	}
 
 	_, err = ProviderCollection.InsertOne(context.Background(), newProfile)

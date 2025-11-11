@@ -47,6 +47,7 @@ func UserRegistration(w http.ResponseWriter, r *http.Request) {
 		PhoneNumber:  payload.PhoneNumber,
 		PasswordHash: string(hashedPass),
 		Role:         models.Role(payload.Role),
+		Bookings:     []primitive.ObjectID{},
 		CreatedAt:    time.Now().Format("2006-01-02,15:04:05"),
 		UpdatedAt:    time.Now().Format("2006-01-02,15:04:05"),
 	}
