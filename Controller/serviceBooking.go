@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -138,4 +139,94 @@ func GetMyBookings(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"bookings": bookings,
 	})
+}
+
+// GetMyProviderBookings returns bookings for the authenticated provider (by providerId)
+func GetMyProviderBookings(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	claims, err := auth.VerifyJwt(authHeader)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := BookingCollection.Find(ctx, bson.M{"providerId": claims.UserId})
+	if err != nil {
+		log.Println("Error fetching provider bookings:", err)
+		http.Error(w, "Failed to fetch bookings", http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var bookings []models.Booking
+	if err := cursor.All(ctx, &bookings); err != nil {
+		log.Println("Error decoding provider bookings:", err)
+		http.Error(w, "Failed to decode bookings", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"bookings": bookings,
+	})
+}
+
+// UpdateBookingStatus allows providers to accept or decline a booking
+func UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	claims, err := auth.VerifyJwt(authHeader)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	bidStr := vars["bookingId"]
+	if bidStr == "" {
+		http.Error(w, "missing bookingId", http.StatusBadRequest)
+		return
+	}
+	bid, err := primitive.ObjectIDFromHex(bidStr)
+	if err != nil {
+		http.Error(w, "invalid bookingId", http.StatusBadRequest)
+		return
+	}
+
+	var payload struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	newStatus := models.Status(payload.Status)
+	if newStatus != models.Accepted && newStatus != models.Cancelled && newStatus != models.Completed {
+		http.Error(w, "invalid status", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var booking models.Booking
+	if err := BookingCollection.FindOne(ctx, bson.M{"_id": bid}).Decode(&booking); err != nil {
+		http.Error(w, "booking not found", http.StatusNotFound)
+		return
+	}
+	if booking.ProviderId != claims.UserId {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	_, err = BookingCollection.UpdateOne(ctx, bson.M{"_id": bid}, bson.M{"$set": bson.M{"status": newStatus}})
+	if err != nil {
+		http.Error(w, "failed to update status", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"message": "status updated"})
 }

@@ -17,6 +17,8 @@ func Router() *mux.Router {
 	router.HandleFunc("/service", controller.ServiceRegistration).Methods("POST")
 	router.HandleFunc("/booking", controller.ServiceBooking).Methods("POST")
 	router.HandleFunc("/bookings/me", controller.GetMyBookings).Methods("GET")
+	router.HandleFunc("/providers/me/bookings", controller.GetMyProviderBookings).Methods("GET")
+	router.HandleFunc("/bookings/{bookingId}/status", controller.UpdateBookingStatus).Methods("PUT")
 	router.HandleFunc("/updateschedule", controller.UpdateProviderSchedule).Methods("PUT")
 	router.HandleFunc("/webhooks/notifications", controller.HandleNotificationWebhook).Methods("POST")
 	return router
