@@ -45,7 +45,7 @@ func main() {
 	log.Println("Cron job scheduler for reminders has been started.")
 
 	r := router.Router()
-	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:5173"})
+	allowedOrigins := handlers.AllowedOrigins([]string{"http://localhost:5173, https://expert-booking-y2x7.onrender.com"})
 	allowedMethods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})
 	allowedHeaders := handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
 
