@@ -21,5 +21,9 @@ func Router() *mux.Router {
 	router.HandleFunc("/bookings/{bookingId}/status", controller.UpdateBookingStatus).Methods("PUT")
 	router.HandleFunc("/updateschedule", controller.UpdateProviderSchedule).Methods("PUT")
 	router.HandleFunc("/webhooks/notifications", controller.HandleNotificationWebhook).Methods("POST")
+
+	// Google OAuth routes
+	router.HandleFunc("/auth/google/login", controller.GoogleLogin).Methods("GET")
+	router.HandleFunc("/auth/google/callback", controller.GoogleCallback).Methods("GET")
 	return router
 }
