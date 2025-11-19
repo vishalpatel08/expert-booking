@@ -70,9 +70,17 @@ func UserRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "User registered successfully",
 		"token":   tokenString,
+		"user": map[string]interface{}{
+			"_id":         newUserId.Hex(),
+			"firstName":   user.FirstName,
+			"lastName":    user.LastName,
+			"email":       user.Email,
+			"phoneNumber": user.PhoneNumber,
+			"role":        user.Role,
+		},
 	})
 
 }

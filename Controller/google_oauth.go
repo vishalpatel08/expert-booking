@@ -184,6 +184,8 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	q.Set("lastName", user.LastName)
 	q.Set("email", user.Email)
 	q.Set("role", string(user.Role))
+	// Expose user ID so frontend can persist it on the current user object
+	q.Set("userId", user.Id.Hex())
 	redir.RawQuery = q.Encode()
 	http.Redirect(w, r, redir.String(), http.StatusFound)
 }

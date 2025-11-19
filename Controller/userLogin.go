@@ -59,10 +59,12 @@ func UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Build response containing token and selected user fields (don't return password hash)
+	// Include the MongoDB user ID so the frontend can track the current user reliably
 	response := map[string]interface{}{
 		"message": "Login successful!",
 		"token":   tokenString,
 		"user": map[string]interface{}{
+			"_id":         user.Id.Hex(),
 			"firstName":   user.FirstName,
 			"lastName":    user.LastName,
 			"email":       user.Email,
