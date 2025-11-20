@@ -4,7 +4,6 @@ import (
 	controller "BookingPlatfrom/Controller"
 	"BookingPlatfrom/websocket"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -199,7 +198,6 @@ func (r *Router) GetUser(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	fmt.Println(user)
 	// Return only public fields
 	result := map[string]interface{}{
 		"_id":       id,

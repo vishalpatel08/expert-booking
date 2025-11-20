@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -27,11 +26,6 @@ func sendReminderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received SendReminder request for user %s with message: '%s'", req.UserID, req.Message)
-
-	//
-	fmt.Printf("--> Sending reminder via Email to %s for booking %s\n", req.UserEmail, req.BookingID)
-	//
-
 	deliveryID := "id_12345"
 
 	w.Header().Set("Content-Type", "application/json")

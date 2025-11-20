@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Welcome to Expert-Booking")
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found, using system environment variables")
 	}
 
 	client, err := db.ConnectDB()

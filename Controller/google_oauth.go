@@ -5,7 +5,6 @@ import (
 	models "BookingPlatfrom/Models"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -38,11 +37,9 @@ func googleConfig() *oauth2.Config {
 
 func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	role := r.URL.Query().Get("role")
-	fmt.Println("debug 1", role)
 	if role == "" {
 		role = string(models.RoleClient)
 	}
-	fmt.Println("debug 2", role)
 	state := url.QueryEscape(role)
 	authURL := googleConfig().AuthCodeURL(state, oauth2.AccessTypeOffline)
 	http.Redirect(w, r, authURL, http.StatusFound)
@@ -84,7 +81,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid user info", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(info)
 	if strings.TrimSpace(info.Email) == "" {
 		http.Error(w, "Email not provided by Google", http.StatusBadRequest)
 		return

@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -37,7 +36,6 @@ func ServiceBooking(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println(" Data : ", payload)
 	if err := Validate.Struct(payload); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

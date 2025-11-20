@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -24,7 +23,6 @@ func SendReminders() {
 	log.Println("Running reminder job...")
 
 	now := time.Now().UTC()
-	fmt.Println(now)
 	startTimeWindow := now.Add(30 * time.Minute)
 	endTimeWindow := now.Add(31 * time.Minute)
 
