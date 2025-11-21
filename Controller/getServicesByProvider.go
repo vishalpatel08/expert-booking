@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// GetServicesByProvider returns all services for a given provider id (provider's user id)
 func GetServicesByProvider(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -33,16 +32,13 @@ func GetServicesByProvider(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Try to find provider profile to read ServiceIds
 	var profile models.ProviderProfile
 	err = ProviderCollection.FindOne(ctx, bson.M{"userId": providerObjID}).Decode(&profile)
 
 	var filter bson.M
 	if err == nil && len(profile.ServiceIds) > 0 {
-		// Fetch by stored service IDs for exact linkage
 		filter = bson.M{"_id": bson.M{"$in": profile.ServiceIds}}
 	} else {
-		// Fallback: fetch by providerId on services collection
 		filter = bson.M{"providerId": providerObjID}
 	}
 

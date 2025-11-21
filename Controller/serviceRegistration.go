@@ -54,7 +54,6 @@ func ServiceRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	insertedID, _ := res.InsertedID.(primitive.ObjectID)
-	// push service id into provider profile
 	_, _ = ProviderCollection.UpdateOne(
 		context.Background(),
 		bson.M{"userId": claims.UserId},

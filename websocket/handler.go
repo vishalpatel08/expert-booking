@@ -13,12 +13,10 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// In production, you should validate the origin
 		return true
 	},
 }
 
-// ServeWs handles websocket requests from clients
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, userID string) {
 	log.Printf("Incoming websocket upgrade request. URL=%s RemoteAddr=%s userID=%s", r.URL.String(), r.RemoteAddr, userID)
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -35,8 +33,6 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, userID string) {
 	}
 
 	hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in new goroutines
 	go client.writePump(hub)
 	go client.readPump(hub)
 }
@@ -66,8 +62,6 @@ func (c *Client) readPump(hub *Hub) {
 
 		msg.Timestamp = time.Now().Unix()
 		msg.SenderID = c.UserID
-
-		// Broadcast the message to the recipient
 		hub.broadcast <- msg
 	}
 }

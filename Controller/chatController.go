@@ -32,7 +32,6 @@ func NewChatController(chatCollection *mongo.Collection) *ChatController {
 
 // GetChatHistory returns the chat history between two users
 func (cc *ChatController) GetChatHistory(w http.ResponseWriter, r *http.Request) {
-	// Get query parameters
 	senderID := r.URL.Query().Get("senderId")
 	receiverID := r.URL.Query().Get("receiverId")
 
@@ -41,11 +40,9 @@ func (cc *ChatController) GetChatHistory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Find messages between the two users
 	filter := bson.M{
 		"$or": []bson.M{
 			{
@@ -72,24 +69,19 @@ func (cc *ChatController) GetChatHistory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Return the messages as JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
 }
 
-// SaveMessage saves a chat message to the database
 func (cc *ChatController) SaveMessage(message ChatMessage) error {
 	message.Timestamp = time.Now()
 	_, err := cc.chatCollection.InsertOne(context.Background(), message)
 	return err
 }
 
-// GetRecentChats returns a list of users the current user has chatted with
 func (cc *ChatController) GetRecentChats(userID string) ([]map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	// Get distinct user IDs that the current user has chatted with
 	pipeline := mongo.Pipeline{
 		bson.D{{
 			Key: "$match",
@@ -123,7 +115,6 @@ func (cc *ChatController) GetRecentChats(userID string) ([]map[string]interface{
 			continue
 		}
 
-		// Determine the other user ID
 		var otherUserID string
 		if result["senderId"] == userID {
 			otherUserID = result["receiverId"].(string)
@@ -131,7 +122,6 @@ func (cc *ChatController) GetRecentChats(userID string) ([]map[string]interface{
 			otherUserID = result["senderId"].(string)
 		}
 
-		// Only add each user once
 		if !seen[otherUserID] {
 			recentChats = append(recentChats, map[string]interface{}{
 				"userId":      otherUserID,
@@ -141,7 +131,6 @@ func (cc *ChatController) GetRecentChats(userID string) ([]map[string]interface{
 			seen[otherUserID] = true
 		}
 
-		// Limit the number of recent chats
 		if len(recentChats) >= 20 {
 			break
 		}

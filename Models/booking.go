@@ -9,10 +9,10 @@ import (
 type Status string
 
 const (
-	Scheduled Status = "scheduled" // waiting for provider approval
-	Accepted  Status = "accepted"  // approved by provider
+	Scheduled Status = "scheduled"
+	Accepted  Status = "accepted"
 	Completed Status = "completed"
-	Cancelled Status = "cancelled" // declined or cancelled
+	Cancelled Status = "cancelled"
 )
 
 type Booking struct {

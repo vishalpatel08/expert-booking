@@ -86,7 +86,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// derive safe first/last name if Google did not provide them
 	firstName := strings.TrimSpace(info.GivenName)
 	lastName := strings.TrimSpace(info.FamilyName)
 	if firstName == "" && lastName == "" {
@@ -96,7 +95,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		firstName = strings.Title(localPart)
 	}
 
-	// Upsert user by email
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -129,7 +127,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// update existing user names if they are empty
 		updateNeeded := false
 		update := bson.M{}
 		if strings.TrimSpace(user.FirstName) == "" && firstName != "" {
@@ -180,7 +177,6 @@ func GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	q.Set("lastName", user.LastName)
 	q.Set("email", user.Email)
 	q.Set("role", string(user.Role))
-	// Expose user ID so frontend can persist it on the current user object
 	q.Set("userId", user.Id.Hex())
 	redir.RawQuery = q.Encode()
 	http.Redirect(w, r, redir.String(), http.StatusFound)

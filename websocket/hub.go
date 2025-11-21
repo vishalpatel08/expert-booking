@@ -67,7 +67,6 @@ func (h *Hub) Run() {
 				log.Printf("Broadcasting message from %s to %s", message.SenderID, message.ReceiverID)
 				select {
 				case recipient.send <- message:
-					// delivered to recipient send channel
 				default:
 					log.Printf("Recipient send buffer full, closing connection for user %s", recipient.UserID)
 					close(recipient.send)
@@ -82,18 +81,14 @@ func (h *Hub) Run() {
 	}
 }
 
-// BroadcastMessage attempts to enqueue a message for delivery to the hub's
-// broadcast loop. It is non-blocking to avoid stalling callers.
 func (h *Hub) BroadcastMessage(msg Message) {
 	select {
 	case h.broadcast <- msg:
-		// enqueued
 	default:
 		log.Printf("Dropping broadcast message to receiver %s: hub busy", msg.ReceiverID)
 	}
 }
 
-// GetUserConnections returns a map of online users
 func (h *Hub) GetUserConnections() map[string]bool {
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()

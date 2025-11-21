@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ProviderResponse represents the payload returned for each provider
 type ProviderResponse struct {
 	ID             primitive.ObjectID   `json:"id" bson:"_id,omitempty"`
 	UserId         primitive.ObjectID   `json:"userId" bson:"userId"`
@@ -27,7 +26,6 @@ type ProviderResponse struct {
 	Services       []models.Service     `json:"services,omitempty"`
 }
 
-// GetProviders returns a list of providers with basic user info and their services.
 func GetProviders(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -61,7 +59,6 @@ func GetProviders(w http.ResponseWriter, r *http.Request) {
 			ServiceIds:     p.ServiceIds,
 		}
 
-		// Fetch user info
 		var user models.User
 		if err := UserCollection.FindOne(ctx, bson.M{"_id": p.UserId}).Decode(&user); err == nil {
 			pr.FirstName = user.FirstName
@@ -70,7 +67,6 @@ func GetProviders(w http.ResponseWriter, r *http.Request) {
 			pr.PhoneNumber = user.PhoneNumber
 		}
 
-		// Fetch services for this provider
 		svcCursor, err := ServiceCollection.Find(ctx, bson.M{"providerId": p.UserId})
 		if err == nil {
 			var services []models.Service

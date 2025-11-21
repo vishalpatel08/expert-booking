@@ -22,13 +22,10 @@ type AvailabilityUpdate struct {
 	EndTime   string `json:"endTime" validate:"required"`
 }
 
-// GetProviderSchedule returns the weekly schedule for a given providerId (path param)
 func GetProviderSchedule(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	providerId := r.URL.Query().Get("providerId")
 	if providerId == "" {
-		// also support /providers/{providerId}/schedule with mux vars if available
-		// fallback to parsing from last URL segment
 		parts := splitPath(r.URL.Path)
 		if len(parts) >= 3 {
 			providerId = parts[len(parts)-2]
@@ -54,7 +51,6 @@ func GetProviderSchedule(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(schedule)
 }
 
-// splitPath splits URL path into segments ignoring leading/trailing slashes
 func splitPath(p string) []string {
 	var parts []string
 	start := 0

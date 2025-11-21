@@ -86,7 +86,7 @@ func ServiceBooking(w http.ResponseWriter, r *http.Request) {
 		ServiceId:    sid,
 		StartTime:    payload.StartTime,
 		EndTime:      endTime,
-		Status:       models.Scheduled, // need to check
+		Status:       models.Scheduled,
 		ReminderSent: false,
 	}
 	res, err := BookingCollection.InsertOne(context.Background(), newBooking)
@@ -106,7 +106,6 @@ func ServiceBooking(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetMyBookings returns bookings for the authenticated user
 func GetMyBookings(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	claims, err := auth.VerifyJwt(authHeader)
@@ -139,7 +138,6 @@ func GetMyBookings(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetMyProviderBookings returns bookings for the authenticated provider (by providerId)
 func GetMyProviderBookings(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	claims, err := auth.VerifyJwt(authHeader)
@@ -172,7 +170,6 @@ func GetMyProviderBookings(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// UpdateBookingStatus allows providers to accept or decline a booking
 func UpdateBookingStatus(w http.ResponseWriter, r *http.Request) {
 	authHeader := r.Header.Get("Authorization")
 	claims, err := auth.VerifyJwt(authHeader)

@@ -29,7 +29,6 @@ func NewRouter(hub *websocket.Hub, chatController *controller.ChatController) *R
 }
 
 func (r *Router) setupRoutes() {
-	// Existing routes
 	r.HandleFunc("/registration", controller.UserRegistration).Methods("POST")
 	r.HandleFunc("/login", controller.UserLogin).Methods("POST")
 	r.HandleFunc("/provider", controller.ProviderRegistration).Methods("POST")
@@ -50,7 +49,7 @@ func (r *Router) setupRoutes() {
 	r.HandleFunc("/api/messages", r.GetMessagesBetweenUsers).Methods("GET")
 	r.HandleFunc("/api/messages", r.SendMessage).Methods("POST")
 
-	// User lookup (returns basic public profile for user id)
+	// User lookup
 	r.HandleFunc("/api/users/{id}", r.GetUser).Methods("GET")
 
 	// WebSocket endpoint
@@ -64,31 +63,23 @@ func (r *Router) setupRoutes() {
 	r.HandleFunc("/auth/google/callback", controller.GoogleCallback).Methods("GET")
 }
 
-// DebugOnlineUsers returns a JSON map of currently online users
 func (r *Router) DebugOnlineUsers(w http.ResponseWriter, req *http.Request) {
 	users := r.hub.GetUserConnections()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
 
-// GetChatHistory handles GET /api/chats?userId=xxx&otherUserId=yyy
 func (r *Router) GetChatHistory(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Query().Get("userId")
 	otherUserID := req.URL.Query().Get("otherUserId")
-
 	if userID == "" || otherUserID == "" {
 		http.Error(w, "userId and otherUserId are required", http.StatusBadRequest)
 		return
 	}
-
-	// Call the chat controller to get the chat history
 	r.chatController.GetChatHistory(w, req)
-
-	// Return the messages as JSON
 	w.Header().Set("Content-Type", "application/json")
 }
 
-// GetRecentChats handles GET /api/chats/recent?userId=xxx
 func (r *Router) GetRecentChats(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Query().Get("userId")
 	if userID == "" {
@@ -96,19 +87,16 @@ func (r *Router) GetRecentChats(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Call the chat controller to get recent chats
 	recentChats, err := r.chatController.GetRecentChats(userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Return the recent chats as JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(recentChats)
 }
 
-// handleWebSocket handles WebSocket connections
 func (r *Router) handleWebSocket(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Query().Get("userId")
 	if userID == "" {
@@ -118,9 +106,7 @@ func (r *Router) handleWebSocket(w http.ResponseWriter, req *http.Request) {
 	websocket.ServeWs(r.hub, w, req, userID)
 }
 
-// GetMessagesBetweenUsers handles GET /api/messages?user1=:id1&user2=:id2
 func (r *Router) GetMessagesBetweenUsers(w http.ResponseWriter, req *http.Request) {
-	// Get query parameters
 	user1ID := req.URL.Query().Get("user1")
 	user2ID := req.URL.Query().Get("user2")
 
@@ -129,33 +115,27 @@ func (r *Router) GetMessagesBetweenUsers(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	// Call the chat controller to get messages between users
 	req.URL.RawQuery = "senderId=" + user1ID + "&receiverId=" + user2ID
 	r.chatController.GetChatHistory(w, req)
 }
 
-// SendMessage handles POST /api/messages
 func (r *Router) SendMessage(w http.ResponseWriter, req *http.Request) {
-	// Parse request body
 	var message controller.ChatMessage
 	if err := json.NewDecoder(req.Body).Decode(&message); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Validate required fields
 	if message.SenderID == "" || message.ReceiverID == "" || message.Content == "" {
 		http.Error(w, "senderId, receiverId, and content are required", http.StatusBadRequest)
 		return
 	}
 
-	// Save the message to the database
 	if err := r.chatController.SaveMessage(message); err != nil {
 		http.Error(w, "Failed to save message: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Broadcast the saved message to any connected websocket recipient for real-time delivery
 	wsMsg := websocket.Message{
 		SenderID:   message.SenderID,
 		ReceiverID: message.ReceiverID,
@@ -163,11 +143,8 @@ func (r *Router) SendMessage(w http.ResponseWriter, req *http.Request) {
 		Timestamp:  time.Now().Unix(),
 	}
 
-	// Send in a goroutine to avoid blocking the HTTP response
-	// enqueue broadcast without blocking
 	go r.hub.BroadcastMessage(wsMsg)
 
-	// Return success response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -176,7 +153,6 @@ func (r *Router) SendMessage(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// GetUser returns a public profile for the given user id
 func (r *Router) GetUser(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -185,7 +161,6 @@ func (r *Router) GetUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Convert to ObjectID
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
@@ -198,7 +173,6 @@ func (r *Router) GetUser(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
-	// Return only public fields
 	result := map[string]interface{}{
 		"_id":       id,
 		"firstName": user["firstname"],
