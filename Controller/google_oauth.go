@@ -5,6 +5,7 @@ import (
 	models "BookingPlatfrom/Models"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -42,6 +43,7 @@ func GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	state := url.QueryEscape(role)
 	authURL := googleConfig().AuthCodeURL(state, oauth2.AccessTypeOffline)
+	fmt.Println("Sending Redirect URI to Google:", googleConfig().RedirectURL)
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
